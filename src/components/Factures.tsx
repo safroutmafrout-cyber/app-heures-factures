@@ -211,16 +211,44 @@ export default function Factures() {
               <button onClick={handlePrint} className="px-6 py-2.5 rounded-xl font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25 transition-all flex items-center gap-1.5"><Printer size={16} /> Imprimer</button>
               <button
                 onClick={async () => {
-                  if (!invoiceRef.current) return;
+                  if (!invoiceData || !profile || !activeClient) return;
                   setPdfGenerating(true);
                   try {
-                    const container = invoiceRef.current.querySelector('.invoice-container') as HTMLElement;
-                    if (container) {
-                      const blob = await generateInvoicePDF(container, `facture_${invNumber}.pdf`);
-                      downloadPDF(blob, `facture_${invNumber}.pdf`);
-                      setToast({ msg: 'PDF téléchargé ✓', type: 'success' });
-                    }
+                    const blob = await generateInvoicePDF({
+                      companyName: profile.companyName,
+                      tps: profile.tps,
+                      tvq: profile.tvq,
+                      fullName: profile.fullName,
+                      address: profile.address,
+                      city: profile.city,
+                      phone: profile.phone,
+                      clientName: activeClient.name,
+                      clientAddress: activeClient.address,
+                      clientCity: activeClient.city,
+                      invoiceNumber: invNumber,
+                      weekRange: getWeekRange(selectedWeek),
+                      description: desc,
+                      date: new Date().toISOString().split('T')[0],
+                      entries: invoiceData.entries.map(e => ({
+                        date: e.date,
+                        description: e.isHoliday ? `${desc} (Férié)` : desc,
+                        hours: e.hours,
+                      })),
+                      totalHours: invoiceData.totalHours,
+                      normalHours: invoiceData.normalHours,
+                      overtimeHours: invoiceData.overtimeHours,
+                      holidayHours: invoiceData.holidayHours,
+                      rate: invoiceData.rate,
+                      otMul: invoiceData.otMul,
+                      subtotal: invoiceData.subtotal,
+                      tpsAmount: invoiceData.tps,
+                      tvqAmount: invoiceData.tvq,
+                      total: invoiceData.total,
+                    });
+                    downloadPDF(blob, `facture_${invNumber}.pdf`);
+                    setToast({ msg: 'PDF téléchargé ✓', type: 'success' });
                   } catch (err) {
+                    console.error('PDF error:', err);
                     setToast({ msg: 'Erreur lors de la génération du PDF', type: 'error' });
                   }
                   setPdfGenerating(false);
