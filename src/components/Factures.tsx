@@ -610,17 +610,23 @@ export default function Factures() {
                       <td className="px-3 py-2.5 text-center">
                         {rec.sentTo ? (() => {
                           const history = rec.sendHistory || [{ email: rec.sentTo!, sentAt: rec.sentAt || rec.generatedAt }];
-                          const tooltip = history.map(h => 
+                          const latest = history[history.length - 1];
+                          const count = history.length;
+                          const fullTooltip = history.map(h => 
                             `${new Date(h.sentAt).toLocaleDateString('fr-CA')} → ${h.email}`
                           ).join('\n');
-                          const count = history.length;
                           return (
-                            <span 
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 cursor-help" 
-                              title={tooltip}
-                            >
-                              ✉️ Envoyé{count > 1 ? ` (${count}x)` : ''}
-                            </span>
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span 
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 cursor-help" 
+                                title={fullTooltip}
+                              >
+                                ✉️ Envoyé{count > 1 ? ` (${count}x)` : ''}
+                              </span>
+                              <span className="text-[9px] text-[var(--color-text-muted)] truncate max-w-[140px]">
+                                {new Date(latest.sentAt).toLocaleDateString('fr-CA')} → {latest.email}
+                              </span>
+                            </div>
                           );
                         })() : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
