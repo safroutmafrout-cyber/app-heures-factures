@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { getEntries, getClients, getProfile, getNextInvoiceNumber, incrementInvoiceNumber, saveGeneratedInvoice, getGeneratedInvoices, getInvoiceForWeek, markInvoiceSent } from '@/lib/store';
 import type { InvoiceRecord } from '@/lib/store';
 import { getWeekKey, getWeekRange, money } from '@/lib/utils';
-import { FileText, Printer, Mail, Download, CheckCircle2, XCircle, BookOpen, Send, X, Loader2 } from 'lucide-react';
+import { FileText, Printer, Mail, Download, CheckCircle2, XCircle, BookOpen, Send, X, Loader2, AlertTriangle } from 'lucide-react';
 import type { TimeEntry, Client, UserProfile } from '@/lib/types';
 import { generateInvoicePDF, downloadPDF, getInvoiceHTML } from '@/lib/pdf';
 import Toast from './Toast';
@@ -25,6 +25,7 @@ export default function Factures() {
   const [emailMsg, setEmailMsg] = useState('');
   const [emailSending, setEmailSending] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState<{ existing: InvoiceRecord } | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,9 +104,30 @@ export default function Factures() {
     };
   }, [selectedWeek, selectedClient, entries, activeClient]);
 
-  // Check if invoice number is already used
+  // Check if invoice number is already used by a DIFFERENT invoice
   function isInvoiceNumberUsed(num: string | number): boolean {
-    return Object.values(invoiceRecords).some(r => String(r.invoiceNumber) === String(num));
+    return Object.values(invoiceRecords).some(r =>
+      String(r.invoiceNumber) === String(num) &&
+      !(r.weekKey === selectedWeek && r.clientId === selectedClient)
+    );
+  }
+
+  function doGenerate(isRegenerate: boolean, existing?: InvoiceRecord) {
+    if (!invoiceData) return;
+    setGenerated(true);
+    const sentTo = existing?.sentTo;
+    const sentAt = existing?.sentAt;
+    saveGeneratedInvoice({
+      invoiceNumber: invNumber,
+      weekKey: selectedWeek,
+      clientId: selectedClient,
+      total: invoiceData.total,
+      generatedAt: new Date().toISOString(),
+      ...(sentTo ? { sentTo, sentAt } : {}),
+    });
+    if (!isRegenerate) incrementInvoiceNumber();
+    setInvoiceRecords(getGeneratedInvoices());
+    setToast({ msg: isRegenerate ? 'Facture mise à jour ✓' : 'Facture générée ✓', type: 'success' });
   }
 
   function handleGenerate() {
@@ -114,11 +136,17 @@ export default function Factures() {
       return;
     }
     if (isInvoiceNumberUsed(invNumber)) {
-      setToast({ msg: `❌ Le numéro de facture #${invNumber} est déjà utilisé ! Choisissez un autre numéro.`, type: 'error' });
+      setToast({ msg: `❌ Le numéro de facture #${invNumber} est déjà utilisé par une autre facture !`, type: 'error' });
       return;
     }
-    setGenerated(true);
-    setToast({ msg: 'Facture générée ✓', type: 'success' });
+    const existingKey = `${selectedWeek}__${selectedClient}`;
+    const existing = invoiceRecords[existingKey];
+    if (existing) {
+      // Show confirmation dialog
+      setConfirmRegenerate({ existing });
+      return;
+    }
+    doGenerate(false);
   }
 
   function handlePrint() {
@@ -591,6 +619,46 @@ export default function Factures() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Re-Generate Modal */}
+      {confirmRegenerate && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-card p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4 text-orange-400">
+              <AlertTriangle size={24} />
+              <h3 className="font-bold text-lg">Facture déjà générée</h3>
+            </div>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-2">
+              La facture <span className="font-bold text-white">#{confirmRegenerate.existing.invoiceNumber}</span> existe déjà pour cette semaine.
+            </p>
+            {confirmRegenerate.existing.sentTo && (
+              <p className="text-sm text-orange-400 mb-2">
+                ⚠️ Cette facture a été envoyée à <span className="font-bold">{confirmRegenerate.existing.sentTo}</span>
+              </p>
+            )}
+            <p className="text-sm text-[var(--color-text-muted)] mb-6">
+              Voulez-vous la re-générer avec les données actuelles ? Le montant sera mis à jour.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmRegenerate(null)}
+                className="flex-1 py-2.5 rounded-xl font-semibold bg-[var(--color-glass)] border border-[var(--color-glass-border)] hover:bg-[var(--color-glass-hover)] transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  doGenerate(true, confirmRegenerate.existing);
+                  setConfirmRegenerate(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition-all flex items-center justify-center gap-1.5"
+              >
+                <AlertTriangle size={14} /> Mettre à jour
+              </button>
+            </div>
           </div>
         </div>
       )}
