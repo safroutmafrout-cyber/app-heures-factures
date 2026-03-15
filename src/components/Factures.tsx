@@ -33,7 +33,25 @@ export default function Factures() {
     setClients(c);
     setProfileState(getProfile());
     setInvNumber(getNextInvoiceNumber());
-    setInvoiceRecords(getGeneratedInvoices());
+
+    // One-time migration: mark all existing invoices as sent
+    const records = getGeneratedInvoices();
+    if (!localStorage.getItem('invoices_migration_sent_v1')) {
+      let updated = false;
+      Object.values(records).forEach(rec => {
+        if (!rec.sentTo) {
+          rec.sentTo = 'sylvain@theriaultlogistique.com';
+          rec.sentAt = rec.generatedAt;
+          updated = true;
+        }
+      });
+      if (updated) {
+        localStorage.setItem('generatedInvoices', JSON.stringify(records));
+      }
+      localStorage.setItem('invoices_migration_sent_v1', '1');
+    }
+    setInvoiceRecords(records);
+
     if (c.length > 0) setSelectedClient(c[0].id);
   }, []);
 
