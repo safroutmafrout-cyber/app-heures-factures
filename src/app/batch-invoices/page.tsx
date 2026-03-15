@@ -69,7 +69,7 @@ export default function BatchGenerate() {
           const tvq = subtotal * 0.09975;
           const total = subtotal + tps + tvq;
 
-          let invNum = getNextInvoiceNumber();
+          let invNum: string | number = getNextInvoiceNumber();
           let shouldIncrement = true;
 
           // Fusion des deux premières semaines pour la facture 1001
