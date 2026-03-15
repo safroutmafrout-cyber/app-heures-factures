@@ -280,18 +280,18 @@ export default function Dashboard({ onRefresh }: Props) {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard icon={<Clock size={20} />} label="Heures" value={`${metrics.periodHours.toFixed(0)}h`} sub={`${metrics.totalWeeks} semaine${metrics.totalWeeks > 1 ? 's' : ''}`} color="text-blue-400" />
+        <StatCard icon={<Clock size={20} />} label="Heures" value={`${metrics.periodHours.toFixed(1)}h`} sub={`${metrics.totalWeeks} semaine${metrics.totalWeeks > 1 ? 's' : ''}`} color="text-blue-400" />
         <StatCard icon={<DollarSign size={20} />} label="Revenus" value={money(metrics.periodEarnings)} sub={`à ${money(metrics.rate)}/h`} color="text-emerald-400" />
         <StatCard icon={<Landmark size={20} />} label="TPS + TVQ" value={money(metrics.periodTps + metrics.periodTvq)} sub={`TPS ${money(metrics.periodTps)} · TVQ ${money(metrics.periodTvq)}`} color="text-indigo-400" />
         <StatCard icon={<Target size={20} />} label="Total + Taxes" value={money(metrics.periodTotalWithTaxes)} sub="Revenus nets" color="text-[#b19cd9]" />
         
         <StatCard icon={<Zap size={20} />} label="Overtime" value={`${metrics.periodOvertimeH.toFixed(1)}h`} sub={money(metrics.periodOvertimeH * metrics.rate * 1.5)} color="text-orange-400" />
-        <StatCard icon={<Trophy size={20} />} label="Max semaine" value={`${metrics.maxWeek.toFixed(0)}h`} sub={metrics.totalWeeks > 0 ? (metrics.maxWeek > metrics.threshold ? 'Overtime' : 'Normal') : '-'} color="text-yellow-400" />
-        <StatCard icon={<BarChart3 size={20} />} label="Min semaine" value={metrics.minWeek !== null ? `${metrics.minWeek.toFixed(0)}h` : 'N/A'} sub={metrics.minWeek !== null ? 'Moins actif' : 'Pas assez de recul'} color="text-red-400" />
+        <StatCard icon={<Trophy size={20} />} label="Max semaine" value={`${metrics.maxWeek.toFixed(1)}h`} sub={metrics.totalWeeks > 0 ? (metrics.maxWeek > metrics.threshold ? 'Overtime' : 'Normal') : '-'} color="text-yellow-400" />
+        <StatCard icon={<BarChart3 size={20} />} label="Min semaine" value={metrics.minWeek !== null ? `${metrics.minWeek.toFixed(1)}h` : 'N/A'} sub={metrics.minWeek !== null ? 'Moins actif' : 'Pas assez de recul'} color="text-red-400" />
         <StatCard icon={<TrendingUp size={20} />} label="Moy/semaine" value={`${metrics.avgPerWeek.toFixed(1)}h`} sub={money(metrics.avgPerWeek * metrics.rate)} color="text-purple-400" />
         
         <StatCard icon={<Receipt size={20} />} label="Factures" value={`${metrics.invoiceCount}/${metrics.allTimeWeeks}`} sub={metrics.missingInvoices > 0 ? `${metrics.missingInvoices} manquante${metrics.missingInvoices > 1 ? 's' : ''}` : 'À jour ✅'} color="text-cyan-400" />
-        <StatCard icon={<CalendarDays size={20} />} label="Jours fériés" value={`${metrics.periodHolidayH.toFixed(0)}h`} sub={money(metrics.periodHolidayH * metrics.rate * 1.5)} color="text-pink-400" />
+        <StatCard icon={<CalendarDays size={20} />} label="Jours fériés" value={`${metrics.periodHolidayH.toFixed(1)}h`} sub={money(metrics.periodHolidayH * metrics.rate * 1.5)} color="text-pink-400" />
       </div>
 
       {/* Quick Add Form */}
