@@ -8,6 +8,7 @@ import Factures from './Factures';
 import Parametres from './Parametres';
 import AuthButton from './AuthButton';
 import SyncStatus from './SyncStatus';
+import Reminders from './Reminders';
 
 const TABS = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -40,6 +41,9 @@ export default function AppShell() {
           </div>
         </div>
       </header>
+
+      {/* Reminders */}
+      <Reminders />
 
       {/* Desktop Tab Nav */}
       <nav className="hidden md:flex max-w-xl mx-auto mb-6 p-1 rounded-2xl bg-[var(--color-glass)] border border-[var(--color-glass-border)] backdrop-blur-xl no-print">
