@@ -34,7 +34,7 @@ export default function LandingPage() {
         <div className="inline-flex items-center gap-4 mb-6">
           <div className="landing-logo">
             <svg viewBox="0 0 40 40" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 8h24v4.5H17.5L32 28.5V32H8v-4.5h14.5L8 11.5V8z" fill="white" />
+              <path d="M8 8H32V12.5L18 27.5H32V32H8V27.5L22 12.5H8V8Z" fill="white" />
               <circle cx="33" cy="7" r="3" fill="#a78bfa" opacity="0.9" />
             </svg>
           </div>
