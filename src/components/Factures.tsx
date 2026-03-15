@@ -270,8 +270,10 @@ export default function Factures() {
               {invoiceData && activeClient && (
                 <button
                   onClick={() => {
-                    setEmailTo(activeClient.email || '');
-                    setEmailMsg(`Bonjour,\n\nVeuillez trouver ci-dessous la facture #${invNumber} pour la semaine du ${getWeekRange(selectedWeek)}.\n\nTotal: ${money(invoiceData.total)}\n\nCordialement,\n${profile?.fullName || ''}\n${profile?.companyName || ''}\n${profile?.phone || ''}`);
+                    // Remember last-used email per client
+                    const savedEmail = localStorage.getItem(`lastEmail_${activeClient.id}`) || activeClient.email || '';
+                    setEmailTo(savedEmail);
+                    setEmailMsg(`Bonjour,\n\nVeuillez trouver ci-jointe la facture #${invNumber} pour la semaine du ${getWeekRange(selectedWeek)}.\n\nTotal: ${money(invoiceData.total)}\n\nCordialement,\n${profile?.fullName || ''}\n${profile?.companyName || ''}\n${profile?.phone || ''}`);
                     setShowEmailDialog(true);
                   }}
                   className="px-6 py-2.5 rounded-xl font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20 hover:bg-blue-500/25 transition-all flex items-center gap-1.5"
@@ -369,6 +371,8 @@ export default function Factures() {
                     }),
                   });
                   if (res.ok) {
+                    // Save email for this client
+                    if (activeClient) localStorage.setItem(`lastEmail_${activeClient.id}`, emailTo);
                     setToast({ msg: `✅ Email envoyé à ${emailTo} avec PDF joint`, type: 'success' });
                     setShowEmailDialog(false);
                   } else {

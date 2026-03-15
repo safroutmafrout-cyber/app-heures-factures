@@ -31,21 +31,20 @@ export default function LandingPage() {
 
       {/* Logo + Brand */}
       <div className="relative z-10 text-center mb-12 landing-fade-in">
-        <div className="inline-flex items-center gap-3 mb-6">
+        <div className="inline-flex items-center gap-4 mb-6">
           <div className="landing-logo">
             <svg viewBox="0 0 40 40" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Stylized Z with diagonal slash */}
               <path d="M8 8h24v4.5H17.5L32 28.5V32H8v-4.5h14.5L8 11.5V8z" fill="white" />
-              {/* Accent dot */}
               <circle cx="33" cy="7" r="3" fill="#a78bfa" opacity="0.9" />
             </svg>
           </div>
+          <div className="w-[3px] h-12 bg-indigo-500 rounded-full" />
           <div className="text-left">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-              <span className="landing-brand-text">Zairi</span>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+              <span className="landing-brand-text">Zairi ERP</span>
             </h1>
-            <p className="text-xs md:text-sm font-medium text-[var(--color-text-muted)] tracking-[0.2em] uppercase">
-              Solutions
+            <p className="text-[10px] md:text-xs font-bold text-indigo-400 tracking-[0.25em] uppercase">
+              Software Solutions
             </p>
           </div>
         </div>
