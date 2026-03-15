@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { getEntries, getClients, getProfile, getNextInvoiceNumber, incrementInvoiceNumber, saveGeneratedInvoice, getGeneratedInvoices, getInvoiceForWeek } from '@/lib/store';
 import type { InvoiceRecord } from '@/lib/store';
 import { getWeekKey, getWeekRange, money } from '@/lib/utils';
-import { FileText, Printer, Mail, Download, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+import { FileText, Printer, Mail, Download, CheckCircle2, XCircle, BookOpen, Send, X, Loader2 } from 'lucide-react';
 import type { TimeEntry, Client, UserProfile } from '@/lib/types';
+import { generateInvoicePDF, downloadPDF, getInvoiceHTML } from '@/lib/pdf';
 import Toast from './Toast';
 
 export default function Factures() {
@@ -19,6 +20,12 @@ export default function Factures() {
   const [generated, setGenerated] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [invoiceRecords, setInvoiceRecords] = useState<Record<string, InvoiceRecord>>({});
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailTo, setEmailTo] = useState('');
+  const [emailMsg, setEmailMsg] = useState('');
+  const [emailSending, setEmailSending] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setEntries(getEntries());
@@ -201,25 +208,114 @@ export default function Factures() {
           <button onClick={handleGenerate} className="btn-gradient px-6 py-2.5 rounded-xl flex items-center gap-1.5"><FileText size={16} /> Générer</button>
           {generated && (
             <>
-              <button onClick={handlePrint} className="px-6 py-2.5 rounded-xl font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25 transition-all flex items-center gap-1.5"><Printer size={16} /> Imprimer / PDF</button>
+              <button onClick={handlePrint} className="px-6 py-2.5 rounded-xl font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25 transition-all flex items-center gap-1.5"><Printer size={16} /> Imprimer</button>
+              <button
+                onClick={async () => {
+                  if (!invoiceRef.current) return;
+                  setPdfGenerating(true);
+                  try {
+                    const container = invoiceRef.current.querySelector('.invoice-container') as HTMLElement;
+                    if (container) {
+                      const blob = await generateInvoicePDF(container, `facture_${invNumber}.pdf`);
+                      downloadPDF(blob, `facture_${invNumber}.pdf`);
+                      setToast({ msg: 'PDF téléchargé ✓', type: 'success' });
+                    }
+                  } catch (err) {
+                    setToast({ msg: 'Erreur lors de la génération du PDF', type: 'error' });
+                  }
+                  setPdfGenerating(false);
+                }}
+                disabled={pdfGenerating}
+                className="px-6 py-2.5 rounded-xl font-semibold bg-violet-500/15 text-violet-400 border border-violet-500/20 hover:bg-violet-500/25 transition-all flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {pdfGenerating ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                {pdfGenerating ? 'Génération...' : 'Télécharger PDF'}
+              </button>
               {invoiceData && activeClient && (
-                <a
-                  href={`mailto:?subject=${encodeURIComponent(`Facture #${invNumber} — ${getWeekRange(selectedWeek)}`)}&body=${encodeURIComponent(
-                    `Bonjour,\n\nVeuillez trouver ci-joint la facture #${invNumber} pour la semaine du ${getWeekRange(selectedWeek)}.\n\nClient: ${activeClient.name}\nTotal: ${money(invoiceData.total)}\n\nCordialement,\n${profile?.fullName || ''}\n${profile?.companyName || ''}\n${profile?.phone || ''}`
-                  )}`}
-                  className="px-6 py-2.5 rounded-xl font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20 hover:bg-blue-500/25 transition-all inline-flex items-center gap-1.5"
+                <button
+                  onClick={() => {
+                    setEmailTo(activeClient.email || '');
+                    setEmailMsg(`Bonjour,\n\nVeuillez trouver ci-dessous la facture #${invNumber} pour la semaine du ${getWeekRange(selectedWeek)}.\n\nTotal: ${money(invoiceData.total)}\n\nCordialement,\n${profile?.fullName || ''}\n${profile?.companyName || ''}\n${profile?.phone || ''}`);
+                    setShowEmailDialog(true);
+                  }}
+                  className="px-6 py-2.5 rounded-xl font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20 hover:bg-blue-500/25 transition-all flex items-center gap-1.5"
                 >
                   <Mail size={16} /> Envoyer par email
-                </a>
+                </button>
               )}
             </>
           )}
         </div>
       </div>
 
+      {/* Email Dialog */}
+      {showEmailDialog && (
+        <div className="glass-card p-5 no-print border-blue-500/30">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-sm flex items-center gap-2"><Mail size={16} className="text-blue-400" /> Envoyer la facture par email</h3>
+            <button onClick={() => setShowEmailDialog(false)} className="p-1 rounded-lg hover:bg-[var(--color-glass-hover)] text-[var(--color-text-muted)]"><X size={16} /></button>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wider">Destinataire</label>
+              <input
+                type="email"
+                value={emailTo}
+                onChange={e => setEmailTo(e.target.value)}
+                placeholder="client@example.com"
+                className="w-full px-3 py-2.5 bg-[var(--color-input)] border border-[var(--color-glass-border)] rounded-lg text-white text-sm outline-none focus:border-blue-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wider">Message</label>
+              <textarea
+                value={emailMsg}
+                onChange={e => setEmailMsg(e.target.value)}
+                rows={5}
+                className="w-full px-3 py-2.5 bg-[var(--color-input)] border border-[var(--color-glass-border)] rounded-lg text-white text-sm outline-none focus:border-blue-500/50 resize-none"
+              />
+            </div>
+            <button
+              onClick={async () => {
+                if (!emailTo) { setToast({ msg: 'Entrez un email destinataire', type: 'error' }); return; }
+                setEmailSending(true);
+                try {
+                  const invoiceHtml = invoiceRef.current?.querySelector('.invoice-container')?.innerHTML || '';
+                  const res = await fetch('/api/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      to: emailTo,
+                      subject: `Facture #${invNumber} — ${getWeekRange(selectedWeek)}`,
+                      message: emailMsg,
+                      invoiceHtml,
+                    }),
+                  });
+                  if (res.ok) {
+                    setToast({ msg: `✅ Email envoyé à ${emailTo}`, type: 'success' });
+                    setShowEmailDialog(false);
+                  } else {
+                    const err = await res.json();
+                    setToast({ msg: `❌ ${err.error || 'Erreur d\'envoi'}`, type: 'error' });
+                  }
+                } catch (err) {
+                  setToast({ msg: '❌ Erreur réseau', type: 'error' });
+                }
+                setEmailSending(false);
+              }}
+              disabled={emailSending}
+              className="btn-gradient px-6 py-2.5 rounded-xl flex items-center gap-2 disabled:opacity-50"
+            >
+              {emailSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              {emailSending ? 'Envoi en cours...' : 'Envoyer'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Invoice Preview */}
       {generated && invoiceData && profile && activeClient && (
-        <div className="glass-card print-show p-4 md:p-6">
+        <div className="glass-card print-show p-4 md:p-6" ref={invoiceRef}>
           <h3 className="font-bold mb-4 no-print flex items-center gap-2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[var(--color-accent-3)]"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg> Aperçu</h3>
           <div className="invoice-container bg-white text-gray-900 rounded-2xl p-6 md:p-10 max-w-3xl mx-auto shadow-2xl text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
             {/* Header */}

@@ -16,6 +16,7 @@ export interface Client {
   company?: string;
   address: string;
   city: string;
+  email?: string;
   hourlyRate: number;
   overtimeThreshold: number; // hours per week
   overtimeMultiplier: number; // e.g. 1.5

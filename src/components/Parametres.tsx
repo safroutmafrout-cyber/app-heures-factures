@@ -24,6 +24,7 @@ export default function Parametres({ onRefresh }: Props) {
   const [newName, setNewName] = useState('');
   const [newAddr, setNewAddr] = useState('');
   const [newCity, setNewCity] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [newRate, setNewRate] = useState('31');
   const [newOT, setNewOT] = useState('60');
   const [newOTMul, setNewOTMul] = useState('1.5');
@@ -44,13 +45,14 @@ export default function Parametres({ onRefresh }: Props) {
     if (!newName) return;
     addClient({
       name: newName, address: newAddr, city: newCity,
+      email: newEmail || undefined,
       hourlyRate: parseFloat(newRate) || 31,
       overtimeThreshold: parseFloat(newOT) || 60,
       overtimeMultiplier: parseFloat(newOTMul) || 1.5,
     });
     setClients(getClients());
     setShowNewClient(false);
-    setNewName(''); setNewAddr(''); setNewCity('');
+    setNewName(''); setNewAddr(''); setNewCity(''); setNewEmail('');
     setToast({ msg: '✅ Client ajouté', type: 'success' });
     onRefresh();
   }
@@ -132,6 +134,7 @@ export default function Parametres({ onRefresh }: Props) {
               <Field label="Nom de la compagnie" value={newName} onChange={setNewName} placeholder="Ex: Transport ABC" />
               <Field label="Adresse" value={newAddr} onChange={setNewAddr} />
               <Field label="Ville" value={newCity} onChange={setNewCity} />
+              <Field label="Email" value={newEmail} onChange={setNewEmail} placeholder="comptabilite@client.com" />
               <div className="grid grid-cols-3 gap-3">
                 <Field label="Taux $/h" value={newRate} onChange={setNewRate} type="number" />
                 <Field label="Seuil OT (h)" value={newOT} onChange={setNewOT} type="number" />
@@ -152,6 +155,7 @@ export default function Parametres({ onRefresh }: Props) {
                 <div>
                   <div className="font-semibold">{client.name}</div>
                   <div className="text-xs text-[var(--color-text-muted)]">{client.address}, {client.city}</div>
+                  {client.email && <div className="text-xs text-blue-400">{client.email}</div>}
                 </div>
                 <button
                   onClick={() => handleDeleteClient(client.id)}

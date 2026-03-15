@@ -25,6 +25,7 @@ export default function Onboarding({ onComplete }: Props) {
   const [clientName, setClientName] = useState('');
   const [clientAddress, setClientAddress] = useState('');
   const [clientCity, setClientCity] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
   const [hourlyRate, setHourlyRate] = useState('31');
   const [otThreshold, setOtThreshold] = useState('60');
   const [otMultiplier, setOtMultiplier] = useState('1.5');
@@ -42,6 +43,7 @@ export default function Onboarding({ onComplete }: Props) {
       name: clientName,
       address: clientAddress,
       city: clientCity,
+      email: clientEmail || undefined,
       hourlyRate: parseFloat(hourlyRate) || 31,
       overtimeThreshold: parseFloat(otThreshold) || 60,
       overtimeMultiplier: parseFloat(otMultiplier) || 1.5,
@@ -95,6 +97,7 @@ export default function Onboarding({ onComplete }: Props) {
               <Input label="Nom de la compagnie client *" value={clientName} onChange={setClientName} placeholder="Ex: Transport Express Inc." />
               <Input label="Adresse du client" value={clientAddress} onChange={setClientAddress} placeholder="456 Boul Industriel" />
               <Input label="Ville du client" value={clientCity} onChange={setClientCity} placeholder="Laval QC" />
+              <Input label="Email du client" value={clientEmail} onChange={setClientEmail} placeholder="comptabilite@client.com" type="email" />
               <div className="grid grid-cols-3 gap-3">
                 <Input label="Taux horaire ($)" value={hourlyRate} onChange={setHourlyRate} type="number" />
                 <Input label="Seuil overtime (h)" value={otThreshold} onChange={setOtThreshold} type="number" />

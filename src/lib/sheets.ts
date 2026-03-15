@@ -40,8 +40,8 @@ export async function createSpreadsheet(accessToken: string): Promise<string> {
           values: [['companyName', 'tps', 'tvq', 'fullName', 'address', 'city', 'phone']],
         },
         {
-          range: 'Clients!A1:H1',
-          values: [['id', 'name', 'company', 'address', 'city', 'hourlyRate', 'overtimeThreshold', 'overtimeMultiplier']],
+          range: 'Clients!A1:I1',
+          values: [['id', 'name', 'company', 'address', 'city', 'hourlyRate', 'overtimeThreshold', 'overtimeMultiplier', 'email']],
         },
         {
           range: 'Heures!A1:H1',
@@ -81,7 +81,7 @@ export async function writeAllData(
   await sheets.spreadsheets.values.batchClear({
     spreadsheetId,
     requestBody: {
-      ranges: ['Profil!A2:G1000', 'Clients!A2:H1000', 'Heures!A2:H50000', 'Factures!A2:F1000', 'Meta!A2:B100'],
+      ranges: ['Profil!A2:G1000', 'Clients!A2:I1000', 'Heures!A2:H50000', 'Factures!A2:F1000', 'Meta!A2:B100'],
     },
   });
 
@@ -99,9 +99,9 @@ export async function writeAllData(
   // Clients
   if (data.clients.length > 0) {
     batchData.push({
-      range: `Clients!A2:H${data.clients.length + 1}`,
+      range: `Clients!A2:I${data.clients.length + 1}`,
       values: data.clients.map(c => [
-        c.id, c.name, c.company || '', c.address, c.city, c.hourlyRate, c.overtimeThreshold, c.overtimeMultiplier,
+        c.id, c.name, c.company || '', c.address, c.city, c.hourlyRate, c.overtimeThreshold, c.overtimeMultiplier, c.email || '',
       ]),
     });
   }
@@ -151,7 +151,7 @@ export async function readAllData(accessToken: string, spreadsheetId: string) {
 
   const res = await sheets.spreadsheets.values.batchGet({
     spreadsheetId,
-    ranges: ['Profil!A2:G2', 'Clients!A2:H1000', 'Heures!A2:H50000', 'Factures!A2:F1000', 'Meta!A2:B100'],
+    ranges: ['Profil!A2:G2', 'Clients!A2:I1000', 'Heures!A2:H50000', 'Factures!A2:F1000', 'Meta!A2:B100'],
   });
 
   const ranges = res.data.valueRanges || [];
@@ -180,6 +180,7 @@ export async function readAllData(accessToken: string, spreadsheetId: string) {
     hourlyRate: parseFloat(row[5]) || 0,
     overtimeThreshold: parseFloat(row[6]) || 60,
     overtimeMultiplier: parseFloat(row[7]) || 1.5,
+    email: row[8] || '',
   }));
 
   // Parse entries
