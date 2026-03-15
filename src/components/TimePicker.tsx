@@ -37,8 +37,8 @@ export default function TimePicker({ value, onChange, label, placeholder }: Prop
 
   function incHour() { setHour(h => (h + 1) % 24); }
   function decHour() { setHour(h => (h - 1 + 24) % 24); }
-  function incMin() { setMinute(m => (m + 5) % 60); }
-  function decMin() { setMinute(m => (m - 5 + 60) % 60); }
+  function incMin() { setMinute(m => (m + 1) % 60); }
+  function decMin() { setMinute(m => (m - 1 + 60) % 60); }
 
   function confirm() {
     const h = String(hour).padStart(2, '0');

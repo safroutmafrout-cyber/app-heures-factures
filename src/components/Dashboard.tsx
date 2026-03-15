@@ -179,7 +179,7 @@ export default function Dashboard({ onRefresh }: Props) {
     const isHoliday = !!holidayAlert && holidayIsOT;
     addEntry({
       date,
-      start: hasStartEnd ? start : '',
+      start: start || '',
       end: hasStartEnd ? end : '',
       hours,
       clientId,
