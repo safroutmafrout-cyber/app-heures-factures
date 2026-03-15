@@ -249,6 +249,24 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Blob> {
   pdf.text('Total', tCol1, y);
   pdf.text(money(data.total), tCol2, y, { align: 'right' });
 
+  // ===== FOOTER BRANDING =====
+  const footerY = 280; // near bottom of A4
+  pdf.setDrawColor(79, 70, 229);
+  pdf.setLineWidth(0.5);
+  pdf.line(margin, footerY - 8, w - margin, footerY - 8);
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(79, 70, 229);
+  pdf.text('Z', w / 2 - 12, footerY);
+  
+  pdf.setFontSize(7);
+  pdf.setTextColor(31, 41, 55);
+  pdf.text('Zairi ERP', w / 2 - 5, footerY - 1);
+  pdf.setFontSize(5.5);
+  pdf.setTextColor(79, 70, 229);
+  pdf.text('SOFTWARE SOLUTIONS', w / 2 - 5, footerY + 2.5);
+
   return pdf.output('blob');
 }
 
