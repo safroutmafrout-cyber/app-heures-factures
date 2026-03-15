@@ -193,24 +193,22 @@ export async function readAllData(accessToken: string, spreadsheetId: string) {
     // Recalculate hours from start/end if both are available
     if (start && end && start.includes(':') && end.includes(':')) {
       const [sh, sm] = start.split(':').map(Number);
-      let [eh, em] = end.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
       let startMin = sh * 60 + sm;
       let endMin = eh * 60 + em;
       if (endMin <= startMin) endMin += 24 * 60;
       hours = Math.round(((endMin - startMin) / 60) * 100) / 100;
 
-      // Fix AM/PM confusion: if hours > 16 and start is afternoon,
-      // and end hour is 12, treat 12:XX as 00:XX
-      if (hours > 16 && sh >= 12 && eh === 12) {
-        endMin = em;
-        if (endMin <= startMin) endMin += 24 * 60;
-        hours = Math.round(((endMin - startMin) / 60) * 100) / 100;
-      }
-
-      // If still > 14h after fix, fall back to original stored value
-      // (likely a data entry error the user needs to manually correct)
-      if (hours > 14 && originalHours > 0 && originalHours <= 14) {
-        hours = originalHours;
+      // Fix AM/PM confusion: if hours > 14 and start is afternoon,
+      // try interpreting end as PM by adding 12h
+      if (hours > 14 && sh >= 12 && eh <= 12) {
+        const correctedEndMin = ((eh + 12) % 24) * 60 + em;
+        let correctedEnd = correctedEndMin;
+        if (correctedEnd <= startMin) correctedEnd += 24 * 60;
+        const correctedHours = Math.round(((correctedEnd - startMin) / 60) * 100) / 100;
+        if (correctedHours > 0 && correctedHours <= 14) {
+          hours = correctedHours;
+        }
       }
     }
 

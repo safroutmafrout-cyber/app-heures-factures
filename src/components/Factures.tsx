@@ -135,6 +135,10 @@ export default function Factures() {
     setSelectedClient(record.clientId);
     setInvNumber(record.invoiceNumber);
     setGenerated(true);
+    // Scroll to the preview section so buttons are visible
+    setTimeout(() => {
+      invoiceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   }
 
   function handleReprint(record: InvoiceRecord) {
