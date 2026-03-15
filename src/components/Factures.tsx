@@ -317,7 +317,7 @@ export default function Factures() {
       {generated && invoiceData && profile && activeClient && (
         <div className="glass-card print-show p-4 md:p-6" ref={invoiceRef}>
           <h3 className="font-bold mb-4 no-print flex items-center gap-2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[var(--color-accent-3)]"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg> Aperçu</h3>
-          <div className="invoice-container bg-white text-gray-900 rounded-2xl p-6 md:p-10 max-w-3xl mx-auto shadow-2xl text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <div className="invoice-container bg-white text-gray-900 rounded-2xl p-4 sm:p-6 md:p-10 max-w-3xl mx-auto shadow-2xl text-sm overflow-x-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
             {/* Header */}
             <div className="flex justify-between mb-8 pb-5 border-b-[3px] border-indigo-500">
               <div>
@@ -351,20 +351,21 @@ export default function Factures() {
             </div>
 
             {/* Detail Table */}
-            <table className="w-full mb-2">
+            <div className="overflow-x-auto">
+            <table className="w-full mb-2" style={{ minWidth: '400px' }}>
               <thead>
                 <tr className="bg-indigo-600 text-white">
-                  <th className="px-3 py-2 text-left text-xs uppercase">Date</th>
-                  <th className="px-3 py-2 text-left text-xs uppercase">Description</th>
-                  <th className="px-3 py-2 text-right text-xs uppercase">Heures</th>
+                  <th className="px-2 sm:px-3 py-2 text-left text-xs uppercase">Date</th>
+                  <th className="px-2 sm:px-3 py-2 text-left text-xs uppercase">Description</th>
+                  <th className="px-2 sm:px-3 py-2 text-right text-xs uppercase whitespace-nowrap">Heures</th>
                 </tr>
               </thead>
               <tbody>
                 {invoiceData.entries.map(entry => (
                   <tr key={entry.id} className="border-b border-gray-100 even:bg-gray-50">
-                    <td className="px-3 py-1.5 text-xs">{entry.date}</td>
-                    <td className="px-3 py-1.5 text-xs">{entry.isHoliday ? `${desc} (Férié)` : desc}</td>
-                    <td className="px-3 py-1.5 text-right text-xs font-medium">{entry.hours.toFixed(2)}</td>
+                    <td className="px-2 sm:px-3 py-1.5 text-xs whitespace-nowrap">{entry.date}</td>
+                    <td className="px-2 sm:px-3 py-1.5 text-xs">{entry.isHoliday ? `${desc} (Férié)` : desc}</td>
+                    <td className="px-2 sm:px-3 py-1.5 text-right text-xs font-medium whitespace-nowrap">{entry.hours.toFixed(2)}</td>
                   </tr>
                 ))}
                 <tr className="bg-gray-100 font-bold">
@@ -373,17 +374,19 @@ export default function Factures() {
                 </tr>
               </tbody>
             </table>
+            </div>
 
             {/* Billing Summary */}
             <div className="mt-4 mb-2">
               <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Calcul de la facturation</div>
-              <table className="w-full">
+              <div className="overflow-x-auto">
+              <table className="w-full" style={{ minWidth: '380px' }}>
                 <thead>
                   <tr className="border-b-2 border-gray-200">
-                    <th className="px-3 py-1.5 text-left text-xs text-gray-500 uppercase">Type</th>
-                    <th className="px-3 py-1.5 text-right text-xs text-gray-500 uppercase">Heures</th>
-                    <th className="px-3 py-1.5 text-right text-xs text-gray-500 uppercase">Taux</th>
-                    <th className="px-3 py-1.5 text-right text-xs text-gray-500 uppercase">Montant</th>
+                    <th className="px-2 sm:px-3 py-1.5 text-left text-xs text-gray-500 uppercase">Type</th>
+                    <th className="px-2 sm:px-3 py-1.5 text-right text-xs text-gray-500 uppercase whitespace-nowrap">Heures</th>
+                    <th className="px-2 sm:px-3 py-1.5 text-right text-xs text-gray-500 uppercase whitespace-nowrap">Taux</th>
+                    <th className="px-2 sm:px-3 py-1.5 text-right text-xs text-gray-500 uppercase whitespace-nowrap">Montant</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -413,11 +416,12 @@ export default function Factures() {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
 
             {/* Totals */}
             <div className="flex justify-end mt-4">
-              <table className="w-72">
+              <table className="w-full sm:w-72 ml-auto">
                 <tbody>
                   <tr><td className="px-3 py-1.5 text-xs">Sous-total</td><td className="px-3 py-1.5 text-right text-xs">{money(invoiceData.subtotal)}</td></tr>
                   <tr><td className="px-3 py-1.5 text-xs">TPS (5%)</td><td className="px-3 py-1.5 text-right text-xs">{money(invoiceData.tps)}</td></tr>
