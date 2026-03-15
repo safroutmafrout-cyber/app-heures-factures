@@ -33,9 +33,20 @@ export async function POST(req: Request) {
       Buffer.from(
         `<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
           <p style="line-height: 1.8; font-size: 14px; white-space: pre-wrap;">${(message || subject).replace(/\n/g, '<br>')}</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-          <p style="color: #9ca3af; font-size: 11px;">📎 Facture en pièce jointe (PDF)</p>
-          <p style="color: #9ca3af; font-size: 11px; margin-top: 12px;">Envoyé via Zairi — Heures & Factures</p>
+          <p style="color: #6b7280; font-size: 12px; margin-top: 16px;">📎 Facture en pièce jointe (PDF)</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 28px 0 20px;" />
+          <table cellpadding="0" cellspacing="0" style="font-family: 'Segoe UI', Arial, sans-serif;">
+            <tr>
+              <td style="padding-right: 16px; border-right: 3px solid #6366f1;">
+                <div style="font-size: 22px; font-weight: 800; color: #6366f1; letter-spacing: -0.5px;">Z</div>
+              </td>
+              <td style="padding-left: 16px;">
+                <div style="font-size: 13px; font-weight: 700; color: #1f2937;">Zairi ERP</div>
+                <div style="font-size: 10px; color: #6366f1; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 1px;">Software Solutions</div>
+                <div style="font-size: 10px; color: #9ca3af; margin-top: 4px;">Gestion d'heures & facturation intelligente</div>
+              </td>
+            </tr>
+          </table>
         </div>`
       ).toString('base64'),
       '',
