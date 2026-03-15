@@ -30,47 +30,80 @@ export default function Home() {
     }
 
     // Authenticated but no local data → try pulling from Google Sheet
-    // Only attempt once per session to avoid loops
     if (pullAttempted.current) return;
     pullAttempted.current = true;
 
     async function tryPullFromCloud() {
       setAppState('syncing');
+      console.log('[Zairi] Starting auto-pull from cloud...');
 
-      try {
-        const res = await fetch('/api/sheets/pull');
-
-        if (res.ok) {
-          const result = await res.json();
-          const data = result.data;
-
-          // Check if the Sheet had any real data (profile, clients, or entries)
-          const hasProfile = data?.profile && data.profile.companyName;
-          const hasClients = data?.clients?.length > 0;
-          const hasEntries = data?.entries?.length > 0;
-
-          if (hasProfile || hasClients || hasEntries) {
-            // Restore all data to localStorage
-            if (data.profile) saveProfile(data.profile);
-            if (hasClients) saveClients(data.clients);
-            if (hasEntries) saveEntries(data.entries);
-            if (data.invoiceNum) setInvoiceNumber(data.invoiceNum);
-            if (data.invoices && Object.keys(data.invoices).length > 0) {
-              saveAllGeneratedInvoices(data.invoices);
-            }
-            setOnboarded();
-
-            setAppState('app');
-            return;
+      // Retry up to 3 times with increasing delay
+      // (session cookie might not be ready immediately after OAuth redirect)
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          // Wait before retrying (0ms first, 1s second, 2s third)
+          if (attempt > 1) {
+            console.log(`[Zairi] Retry attempt ${attempt}... waiting ${attempt}s`);
+            await new Promise(r => setTimeout(r, attempt * 1000));
           }
-        }
 
-        // If pull returned 404 or empty profile → onboarding
-        console.log('No existing Sheet found or empty profile, showing onboarding');
-      } catch (err) {
-        console.warn('Auto-pull failed:', err);
+          const res = await fetch('/api/sheets/pull');
+          console.log(`[Zairi] Pull response: ${res.status}`);
+
+          if (res.status === 401) {
+            // Session not ready yet, retry
+            console.log('[Zairi] 401 - session not ready, will retry...');
+            continue;
+          }
+
+          if (res.status === 404) {
+            // No spreadsheet found → new user
+            console.log('[Zairi] 404 - no spreadsheet found, new user');
+            break;
+          }
+
+          if (res.ok) {
+            const result = await res.json();
+            const data = result.data;
+            console.log('[Zairi] Pull data received:', {
+              hasProfile: !!data?.profile?.companyName,
+              clientsCount: data?.clients?.length || 0,
+              entriesCount: data?.entries?.length || 0,
+              invoiceNum: data?.invoiceNum,
+            });
+
+            // Check if the Sheet had any real data
+            const hasProfile = data?.profile && data.profile.companyName;
+            const hasClients = data?.clients?.length > 0;
+            const hasEntries = data?.entries?.length > 0;
+
+            if (hasProfile || hasClients || hasEntries) {
+              // Restore all data to localStorage
+              if (data.profile) saveProfile(data.profile);
+              if (hasClients) saveClients(data.clients);
+              if (hasEntries) saveEntries(data.entries);
+              if (data.invoiceNum) setInvoiceNumber(data.invoiceNum);
+              if (data.invoices && Object.keys(data.invoices).length > 0) {
+                saveAllGeneratedInvoices(data.invoices);
+              }
+              setOnboarded();
+
+              console.log('[Zairi] ✅ Data restored from cloud!');
+              setAppState('app');
+              return;
+            } else {
+              console.log('[Zairi] Sheet found but empty data');
+              break;
+            }
+          }
+        } catch (err) {
+          console.warn(`[Zairi] Pull attempt ${attempt} error:`, err);
+          if (attempt === 3) break;
+        }
       }
 
+      // No Sheet found or empty → show onboarding
+      console.log('[Zairi] → Showing onboarding');
       setAppState('onboarding');
     }
 
@@ -91,7 +124,7 @@ export default function Home() {
     );
   }
 
-  // Landing page (not logged in, no local data)
+  // Landing page
   if (appState === 'landing') {
     return <LandingPage />;
   }
@@ -116,7 +149,7 @@ export default function Home() {
     );
   }
 
-  // Onboarding (new user)
+  // Onboarding
   if (appState === 'onboarding') {
     return <Onboarding onComplete={() => setAppState('app')} />;
   }

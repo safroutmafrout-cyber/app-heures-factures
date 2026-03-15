@@ -6,6 +6,9 @@ import { readAllData, findSpreadsheet } from '@/lib/sheets';
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    console.log('[Pull API] Session:', session ? `user=${session.user?.email}` : 'null');
+    console.log('[Pull API] AccessToken present:', !!(session as any)?.accessToken);
+
     if (!session || !(session as any).accessToken) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
@@ -17,7 +20,9 @@ export async function GET(req: Request) {
     let spreadsheetId = url.searchParams.get('spreadsheetId');
 
     if (!spreadsheetId) {
+      console.log('[Pull API] Searching for spreadsheet...');
       spreadsheetId = await findSpreadsheet(accessToken);
+      console.log('[Pull API] Found spreadsheetId:', spreadsheetId || 'NOT FOUND');
     }
 
     if (!spreadsheetId) {
@@ -28,6 +33,12 @@ export async function GET(req: Request) {
     }
 
     const data = await readAllData(accessToken, spreadsheetId);
+    console.log('[Pull API] Data read:', {
+      hasProfile: !!data.profile?.companyName,
+      clientsCount: data.clients.length,
+      entriesCount: data.entries.length,
+      invoiceNum: data.invoiceNum,
+    });
 
     return NextResponse.json({
       success: true,
@@ -35,7 +46,7 @@ export async function GET(req: Request) {
       data,
     });
   } catch (error: any) {
-    console.error('Pull error:', error);
+    console.error('[Pull API] Error:', error.message);
     return NextResponse.json(
       { error: error.message || 'Erreur de récupération' },
       { status: 500 }
