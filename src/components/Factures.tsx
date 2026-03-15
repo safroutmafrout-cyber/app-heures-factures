@@ -314,9 +314,49 @@ export default function Factures() {
             <button
               onClick={async () => {
                 if (!emailTo) { setToast({ msg: 'Entrez un email destinataire', type: 'error' }); return; }
+                if (!invoiceData || !profile || !activeClient) return;
                 setEmailSending(true);
                 try {
-                  const invoiceHtml = invoiceRef.current?.querySelector('.invoice-container')?.innerHTML || '';
+                  // Generate PDF blob
+                  const pdfBlob = await generateInvoicePDF({
+                    companyName: profile.companyName,
+                    tps: profile.tps,
+                    tvq: profile.tvq,
+                    fullName: profile.fullName,
+                    address: profile.address,
+                    city: profile.city,
+                    phone: profile.phone,
+                    clientName: activeClient.name,
+                    clientAddress: activeClient.address,
+                    clientCity: activeClient.city,
+                    invoiceNumber: invNumber,
+                    weekRange: getWeekRange(selectedWeek),
+                    description: desc,
+                    date: new Date().toISOString().split('T')[0],
+                    entries: invoiceData.entries.map(e => ({
+                      date: e.date,
+                      description: e.isHoliday ? `${desc} (Férié)` : desc,
+                      hours: e.hours,
+                    })),
+                    totalHours: invoiceData.totalHours,
+                    normalHours: invoiceData.normalHours,
+                    overtimeHours: invoiceData.overtimeHours,
+                    holidayHours: invoiceData.holidayHours,
+                    rate: invoiceData.rate,
+                    otMul: invoiceData.otMul,
+                    subtotal: invoiceData.subtotal,
+                    tpsAmount: invoiceData.tps,
+                    tvqAmount: invoiceData.tvq,
+                    total: invoiceData.total,
+                  });
+                  // Convert blob to base64
+                  const arrayBuffer = await pdfBlob.arrayBuffer();
+                  const uint8 = new Uint8Array(arrayBuffer);
+                  let binary = '';
+                  for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+                  const pdfBase64 = btoa(binary);
+
+                  const pdfFilename = `facture_${invNumber}.pdf`;
                   const res = await fetch('/api/email/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -324,17 +364,19 @@ export default function Factures() {
                       to: emailTo,
                       subject: `Facture #${invNumber} — ${getWeekRange(selectedWeek)}`,
                       message: emailMsg,
-                      invoiceHtml,
+                      pdfBase64,
+                      filename: pdfFilename,
                     }),
                   });
                   if (res.ok) {
-                    setToast({ msg: `✅ Email envoyé à ${emailTo}`, type: 'success' });
+                    setToast({ msg: `✅ Email envoyé à ${emailTo} avec PDF joint`, type: 'success' });
                     setShowEmailDialog(false);
                   } else {
                     const err = await res.json();
-                    setToast({ msg: `❌ ${err.error || 'Erreur d\'envoi'}`, type: 'error' });
+                    setToast({ msg: `❌ ${err.error || "Erreur d'envoi"}`, type: 'error' });
                   }
                 } catch (err) {
+                  console.error('Email error:', err);
                   setToast({ msg: '❌ Erreur réseau', type: 'error' });
                 }
                 setEmailSending(false);

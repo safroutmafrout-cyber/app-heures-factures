@@ -10,47 +10,53 @@ export async function POST(req: Request) {
     }
 
     const accessToken = (session as any).accessToken as string;
-    const { to, subject, message, invoiceHtml } = await req.json();
+    const { to, subject, message, pdfBase64, filename } = await req.json();
 
     if (!to || !subject) {
       return NextResponse.json({ error: 'Destinataire et sujet requis' }, { status: 400 });
     }
 
-    // Build MIME email
+    // Build MIME email with PDF attachment
     const boundary = 'boundary_' + Date.now();
-    const mimeEmail = [
+    
+    const mimeLines = [
       `To: ${to}`,
       `Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,
       'MIME-Version: 1.0',
-      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
       '',
-      `--${boundary}`,
-      'Content-Type: text/plain; charset=UTF-8',
-      'Content-Transfer-Encoding: base64',
-      '',
-      Buffer.from(message || subject).toString('base64'),
-      '',
+      // --- Text body ---
       `--${boundary}`,
       'Content-Type: text/html; charset=UTF-8',
       'Content-Transfer-Encoding: base64',
       '',
       Buffer.from(
-        invoiceHtml
-          ? `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <p style="color: #333; line-height: 1.6;">${(message || '').replace(/\n/g, '<br>')}</p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-              ${invoiceHtml}
-              <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-              <p style="color: #999; font-size: 12px;">Envoyé via Zairi — Heures & Factures</p>
-            </div>`
-          : `<div style="font-family: Arial, sans-serif;">
-              <p style="color: #333; line-height: 1.6;">${(message || subject).replace(/\n/g, '<br>')}</p>
-              <p style="color: #999; font-size: 12px; margin-top: 24px;">Envoyé via Zairi — Heures & Factures</p>
-            </div>`
+        `<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+          <p style="line-height: 1.8; font-size: 14px; white-space: pre-wrap;">${(message || subject).replace(/\n/g, '<br>')}</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+          <p style="color: #9ca3af; font-size: 11px;">📎 Facture en pièce jointe (PDF)</p>
+          <p style="color: #9ca3af; font-size: 11px; margin-top: 12px;">Envoyé via Zairi — Heures & Factures</p>
+        </div>`
       ).toString('base64'),
       '',
-      `--${boundary}--`,
-    ].join('\r\n');
+    ];
+
+    // --- PDF attachment ---
+    if (pdfBase64) {
+      mimeLines.push(
+        `--${boundary}`,
+        `Content-Type: application/pdf; name="${filename || 'facture.pdf'}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-Disposition: attachment; filename="${filename || 'facture.pdf'}"`,
+        '',
+        pdfBase64,
+        '',
+      );
+    }
+
+    mimeLines.push(`--${boundary}--`);
+
+    const mimeEmail = mimeLines.join('\r\n');
 
     // Base64url encode the email
     const encodedEmail = Buffer.from(mimeEmail)
@@ -73,7 +79,7 @@ export async function POST(req: Request) {
       const errorData = await response.json();
       console.error('Gmail API error:', errorData);
       return NextResponse.json(
-        { error: errorData.error?.message || 'Erreur d\'envoi Gmail' },
+        { error: errorData.error?.message || "Erreur d'envoi Gmail" },
         { status: response.status }
       );
     }
