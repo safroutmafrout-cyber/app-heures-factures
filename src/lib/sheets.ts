@@ -183,17 +183,33 @@ export async function readAllData(accessToken: string, spreadsheetId: string) {
     email: row[8] || '',
   }));
 
-  // Parse entries
-  const entries = (ranges[2]?.values || []).map(row => ({
-    id: row[0],
-    date: row[1],
-    start: row[2],
-    end: row[3],
-    hours: parseFloat(row[4]) || 0,
-    clientId: row[5],
-    isHoliday: row[6] === 'oui',
-    notes: row[7] || '',
-  }));
+  // Parse entries — recalculate hours from start/end to fix truncated data
+  const entries = (ranges[2]?.values || []).map(row => {
+    const start = row[2] || '';
+    const end = row[3] || '';
+    let hours = parseFloat(row[4]) || 0;
+
+    // Recalculate hours from start/end if both are available
+    if (start && end && start.includes(':') && end.includes(':')) {
+      const [sh, sm] = start.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
+      let startMin = sh * 60 + sm;
+      let endMin = eh * 60 + em;
+      if (endMin <= startMin) endMin += 24 * 60;
+      hours = Math.round(((endMin - startMin) / 60) * 100) / 100;
+    }
+
+    return {
+      id: row[0],
+      date: row[1],
+      start,
+      end,
+      hours,
+      clientId: row[5],
+      isHoliday: row[6] === 'oui',
+      notes: row[7] || '',
+    };
+  });
 
   // Parse invoices
   const invoices: Record<string, any> = {};
