@@ -35,21 +35,25 @@ export default function Factures() {
     setProfileState(getProfile());
     setInvNumber(getNextInvoiceNumber());
 
-    // One-time migration: mark all existing invoices as sent
+    // One-time migration: mark existing invoices (< 1026) as sent to sylvain
     const records = getGeneratedInvoices();
-    if (!localStorage.getItem('invoices_migration_sent_v1')) {
+    if (!localStorage.getItem('invoices_migration_sent_v2')) {
       let updated = false;
       Object.values(records).forEach(rec => {
-        if (!rec.sentTo) {
+        const num = typeof rec.invoiceNumber === 'string' ? parseInt(rec.invoiceNumber) : rec.invoiceNumber;
+        if (!rec.sentTo && num < 1026) {
           rec.sentTo = 'sylvain@theriaultlogistique.com';
-          rec.sentAt = rec.generatedAt;
+          // Fake sentAt: generatedAt + 7 days
+          const genDate = new Date(rec.generatedAt);
+          genDate.setDate(genDate.getDate() + 7);
+          rec.sentAt = genDate.toISOString();
           updated = true;
         }
       });
       if (updated) {
-        localStorage.setItem('generatedInvoices', JSON.stringify(records));
+        localStorage.setItem('hf_generated_invoices', JSON.stringify(records));
       }
-      localStorage.setItem('invoices_migration_sent_v1', '1');
+      localStorage.setItem('invoices_migration_sent_v2', '1');
     }
     setInvoiceRecords(records);
 
