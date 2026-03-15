@@ -130,11 +130,15 @@ export default function Factures() {
     [invoiceRecords]
   );
 
-  function handleReprint(record: InvoiceRecord) {
+  function handlePreview(record: InvoiceRecord) {
     setSelectedWeek(record.weekKey);
     setSelectedClient(record.clientId);
     setInvNumber(record.invoiceNumber);
     setGenerated(true);
+  }
+
+  function handleReprint(record: InvoiceRecord) {
+    handlePreview(record);
     setTimeout(() => window.print(), 400);
   }
 
@@ -485,7 +489,12 @@ export default function Factures() {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={`${rec.weekKey}-${rec.clientId}`} className="border-t border-[var(--color-glass-border)] hover:bg-[var(--color-glass-hover)]">
-                      <td className="px-3 py-2.5 font-bold text-[var(--color-accent-3)]">#{rec.invoiceNumber}</td>
+                      <td className="px-3 py-2.5">
+                        <button
+                          onClick={() => handlePreview(rec)}
+                          className="font-bold text-[var(--color-accent-3)] hover:underline cursor-pointer"
+                        >#{rec.invoiceNumber}</button>
+                      </td>
                       <td className="px-3 py-2.5">{getWeekRange(rec.weekKey)}</td>
                       <td className="px-3 py-2.5 text-[var(--color-text-secondary)]">{client?.name || '—'}</td>
                       <td className="px-3 py-2.5 text-right font-semibold text-[var(--color-success)]">{money(rec.total)}</td>
