@@ -147,3 +147,13 @@ export function getInvoiceForWeek(weekKey: string, clientId: string): InvoiceRec
   return all[invoiceKey(weekKey, clientId)] || null;
 }
 
+// Bulk restore invoice number (used by cloud pull)
+export function setInvoiceNumber(num: number) {
+  localStorage.setItem(KEYS.invoiceNum, String(num));
+}
+
+// Bulk restore all generated invoices (used by cloud pull)
+export function saveAllGeneratedInvoices(invoices: Record<string, InvoiceRecord>) {
+  localStorage.setItem(KEYS.generatedInvoices, JSON.stringify(invoices));
+}
+

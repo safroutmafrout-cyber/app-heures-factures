@@ -170,3 +170,127 @@ body {
 
   @page { margin: 1cm; size: letter; }
 }
+
+/* ── Landing Page ────────────────────────────────── */
+
+/* Zairi Logo */
+.landing-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.35);
+  position: relative;
+}
+
+.landing-logo::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #6366f1, #a855f7, #6366f1);
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(8px);
+}
+
+.landing-logo-letter {
+  color: white;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Brand text gradient */
+.landing-brand-text {
+  background: linear-gradient(135deg, #c7d2fe, #e9d5ff, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects */
+.landing-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.landing-glow-1 {
+  width: 400px;
+  height: 400px;
+  background: rgba(99, 102, 241, 0.15);
+  top: 10%;
+  left: 15%;
+  animation: glow-float 8s ease-in-out infinite;
+}
+
+.landing-glow-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(139, 92, 246, 0.12);
+  bottom: 20%;
+  right: 10%;
+  animation: glow-float 10s ease-in-out infinite reverse;
+}
+
+.landing-glow-3 {
+  width: 200px;
+  height: 200px;
+  background: rgba(168, 85, 247, 0.1);
+  top: 50%;
+  left: 60%;
+  animation: glow-float 12s ease-in-out infinite 2s;
+}
+
+@keyframes glow-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.1); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/* Feature cards */
+.landing-feature-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.landing-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+
+/* CTA button */
+.landing-cta {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.4);
+}
+.landing-cta:hover {
+  box-shadow: 0 8px 40px rgba(99, 102, 241, 0.55);
+  transform: translateY(-2px);
+}
+.landing-cta:active {
+  transform: scale(0.97);
+}
+
+/* Fade-in animations */
+.landing-fade-in {
+  animation: landing-appear 0.8s ease-out both;
+}
+.landing-fade-delay-1 { animation-delay: 0.2s; }
+.landing-fade-delay-2 { animation-delay: 0.4s; }
+
+@keyframes landing-appear {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer loading bar */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}

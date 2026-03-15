@@ -25,17 +25,20 @@ export default function AppShell() {
   return (
     <div className="relative z-1 min-h-screen pb-20 md:pb-8">
       {/* Header */}
-      <header className="text-center pt-6 pb-4 px-4 no-print relative">
+      <header className="pt-6 pb-4 px-4 no-print relative">
         <div className="absolute right-4 top-6 flex items-center gap-2">
           <SyncStatus />
           <AuthButton />
         </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold gradient-text">
-          Heures & Factures
-        </h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-          Suivi des heures et facturation
-        </p>
+        <div className="flex items-center gap-2.5 pl-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <span className="text-white font-extrabold text-sm">Z</span>
+          </div>
+          <div>
+            <h1 className="text-lg font-extrabold gradient-text leading-tight">Zairi</h1>
+            <p className="text-[10px] text-[var(--color-text-muted)] font-medium tracking-wider uppercase">Heures & Factures</p>
+          </div>
+        </div>
       </header>
 
       {/* Desktop Tab Nav */}

@@ -3,8 +3,8 @@ import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
-  title: "Heures & Factures",
-  description: "Suivi des heures et facturation — Application pour chauffeurs",
+  title: "Zairi — Heures & Factures",
+  description: "Gestion d'heures et facturation simplifiée par Zairi Solutions",
 };
 
 export const viewport: Viewport = {
