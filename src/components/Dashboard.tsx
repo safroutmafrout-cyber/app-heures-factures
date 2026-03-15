@@ -42,6 +42,7 @@ export default function Dashboard({ onRefresh }: Props) {
   const [holidayAlert, setHolidayAlert] = useState<string | null>(null);
   const [holidayIsOT, setHolidayIsOT] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [pendingEntry, setPendingEntry] = useState<{ hours: number; data: any } | null>(null);
 
   useEffect(() => {
     setEntries(getEntries());
@@ -177,7 +178,7 @@ export default function Dashboard({ onRefresh }: Props) {
 
     const hours = hasStartEnd ? calcHours(start, end) : manualH;
     const isHoliday = !!holidayAlert && holidayIsOT;
-    addEntry({
+    const entryData = {
       date,
       start: start || '',
       end: hasStartEnd ? end : '',
@@ -185,9 +186,21 @@ export default function Dashboard({ onRefresh }: Props) {
       clientId,
       isHoliday,
       notes: holidayAlert && !holidayIsOT ? `${holidayAlert} (taux normal)` : '',
-    });
+    };
+
+    // Warn if hours > 14
+    if (hours > 14) {
+      setPendingEntry({ hours, data: entryData });
+      return;
+    }
+
+    commitEntry(entryData, hours);
+  }
+
+  function commitEntry(entryData: any, hours: number) {
+    addEntry(entryData);
     setEntries(getEntries());
-    setToast({ msg: `✅ ${hours.toFixed(2)}h ajoutées${isHoliday ? ' (Férié)' : ''}`, type: 'success' });
+    setToast({ msg: `✅ ${hours.toFixed(2)}h ajoutées${entryData.isHoliday ? ' (Férié)' : ''}`, type: 'success' });
     setEnd('');
     setManualHours('');
     const d = new Date(date + 'T12:00:00');
@@ -452,6 +465,41 @@ export default function Dashboard({ onRefresh }: Props) {
                 className="flex-1 py-2.5 rounded-xl font-semibold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all flex items-center justify-center gap-1.5"
               >
                 <Trash2 size={14} /> Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm >14h Entry */}
+      {pendingEntry && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-card p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4 text-orange-400">
+              <AlertTriangle size={24} />
+              <h3 className="font-bold text-lg">Durée inhabituellement longue</h3>
+            </div>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-2">
+              L'entrée fait <span className="text-orange-400 font-bold">{pendingEntry.hours.toFixed(2)}h</span>, ce qui dépasse 14 heures.
+            </p>
+            <p className="text-sm text-[var(--color-text-muted)] mb-6">
+              Vérifiez que les heures de début et fin sont correctes. Voulez-vous quand même ajouter cette entrée ?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPendingEntry(null)}
+                className="flex-1 py-2.5 rounded-xl font-semibold bg-[var(--color-glass)] border border-[var(--color-glass-border)] hover:bg-[var(--color-glass-hover)] transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  commitEntry(pendingEntry.data, pendingEntry.hours);
+                  setPendingEntry(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition-all flex items-center justify-center gap-1.5"
+              >
+                <AlertTriangle size={14} /> Confirmer
               </button>
             </div>
           </div>

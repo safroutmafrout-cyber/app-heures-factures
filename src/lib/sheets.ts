@@ -187,16 +187,31 @@ export async function readAllData(accessToken: string, spreadsheetId: string) {
   const entries = (ranges[2]?.values || []).map(row => {
     const start = row[2] || '';
     const end = row[3] || '';
-    let hours = parseFloat(row[4]) || 0;
+    const originalHours = parseFloat(row[4]) || 0;
+    let hours = originalHours;
 
     // Recalculate hours from start/end if both are available
     if (start && end && start.includes(':') && end.includes(':')) {
       const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
+      let [eh, em] = end.split(':').map(Number);
       let startMin = sh * 60 + sm;
       let endMin = eh * 60 + em;
       if (endMin <= startMin) endMin += 24 * 60;
       hours = Math.round(((endMin - startMin) / 60) * 100) / 100;
+
+      // Fix AM/PM confusion: if hours > 16 and start is afternoon,
+      // and end hour is 12, treat 12:XX as 00:XX
+      if (hours > 16 && sh >= 12 && eh === 12) {
+        endMin = em;
+        if (endMin <= startMin) endMin += 24 * 60;
+        hours = Math.round(((endMin - startMin) / 60) * 100) / 100;
+      }
+
+      // If still > 14h after fix, fall back to original stored value
+      // (likely a data entry error the user needs to manually correct)
+      if (hours > 14 && originalHours > 0 && originalHours <= 14) {
+        hours = originalHours;
+      }
     }
 
     return {

@@ -5,11 +5,21 @@ const MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
 
 export function calcHours(start: string, end: string): number {
   const [sh, sm] = start.split(':').map(Number);
-  const [eh, em] = end.split(':').map(Number);
+  let [eh, em] = end.split(':').map(Number);
   let startMin = sh * 60 + sm;
   let endMin = eh * 60 + em;
   if (endMin <= startMin) endMin += 24 * 60;
-  return Math.round(((endMin - startMin) / 60) * 100) / 100;
+  let hours = Math.round(((endMin - startMin) / 60) * 100) / 100;
+
+  // Fix likely AM/PM confusion: if hours > 16 and start is afternoon,
+  // and end hour is 12, the user likely meant 00:XX instead of 12:XX
+  if (hours > 16 && sh >= 12 && eh === 12) {
+    endMin = em; // treat 12:XX as 00:XX
+    if (endMin <= startMin) endMin += 24 * 60;
+    hours = Math.round(((endMin - startMin) / 60) * 100) / 100;
+  }
+
+  return hours;
 }
 
 export function getDayName(dateStr: string, short = false): string {
