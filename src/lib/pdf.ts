@@ -119,7 +119,7 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Blob> {
 
   // Header row (indigo bg)
   pdf.setFillColor(79, 70, 229);
-  pdf.rect(margin, y - 4, contentW, 8, 'F');
+  pdf.rect(margin, y - 5, contentW, 9, 'F');
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
   pdf.setTextColor(255, 255, 255);
@@ -127,7 +127,7 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Blob> {
   pdf.text('DESCRIPTION', col2, y);
   pdf.text('HEURES', col3 - 2, y, { align: 'right' });
 
-  y += 6;
+  y += 8;
 
   // Entry rows
   pdf.setFont('helvetica', 'normal');
