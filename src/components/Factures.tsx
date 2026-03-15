@@ -37,23 +37,29 @@ export default function Factures() {
 
     // One-time migration: mark existing invoices (< 1026) as sent to sylvain
     const records = getGeneratedInvoices();
-    if (!localStorage.getItem('invoices_migration_sent_v2')) {
+    if (!localStorage.getItem('invoices_migration_sent_v3')) {
       let updated = false;
       Object.values(records).forEach(rec => {
         const num = typeof rec.invoiceNumber === 'string' ? parseInt(rec.invoiceNumber) : rec.invoiceNumber;
-        if (!rec.sentTo && num < 1026) {
-          rec.sentTo = 'sylvain@theriaultlogistique.com';
+        if (num < 1026) {
+          const email = 'sylvain@theriaultlogistique.com';
           // Fake sentAt: generatedAt + 7 days
           const genDate = new Date(rec.generatedAt);
           genDate.setDate(genDate.getDate() + 7);
-          rec.sentAt = genDate.toISOString();
+          const fakeSentAt = genDate.toISOString();
+          rec.sentTo = email;
+          rec.sentAt = fakeSentAt;
+          // Create sendHistory if missing
+          if (!rec.sendHistory || rec.sendHistory.length === 0) {
+            rec.sendHistory = [{ email, sentAt: fakeSentAt }];
+          }
           updated = true;
         }
       });
       if (updated) {
         localStorage.setItem('hf_generated_invoices', JSON.stringify(records));
       }
-      localStorage.setItem('invoices_migration_sent_v2', '1');
+      localStorage.setItem('invoices_migration_sent_v3', '1');
     }
     setInvoiceRecords(records);
 
@@ -602,11 +608,21 @@ export default function Factures() {
                       <td className="px-3 py-2.5 text-[var(--color-text-secondary)]">{client?.name || '—'}</td>
                       <td className="px-3 py-2.5 text-right font-semibold text-[var(--color-success)]">{money(rec.total)}</td>
                       <td className="px-3 py-2.5 text-center">
-                        {rec.sentTo ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" title={`Envoyé à ${rec.sentTo}`}>
-                            ✉️ Envoyé
-                          </span>
-                        ) : (
+                        {rec.sentTo ? (() => {
+                          const history = rec.sendHistory || [{ email: rec.sentTo!, sentAt: rec.sentAt || rec.generatedAt }];
+                          const tooltip = history.map(h => 
+                            `${new Date(h.sentAt).toLocaleDateString('fr-CA')} → ${h.email}`
+                          ).join('\n');
+                          const count = history.length;
+                          return (
+                            <span 
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 cursor-help" 
+                              title={tooltip}
+                            >
+                              ✉️ Envoyé{count > 1 ? ` (${count}x)` : ''}
+                            </span>
+                          );
+                        })() : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
                             📄 Généré
                           </span>

@@ -250,22 +250,40 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Blob> {
   pdf.text(money(data.total), tCol2, y, { align: 'right' });
 
   // ===== FOOTER BRANDING =====
-  const footerY = 280; // near bottom of A4
-  pdf.setDrawColor(79, 70, 229);
-  pdf.setLineWidth(0.5);
-  pdf.line(margin, footerY - 8, w - margin, footerY - 8);
+  const footerY = 278; // near bottom of A4
+  const centerX = w / 2;
 
+  // Subtle indigo line separator
+  pdf.setDrawColor(79, 70, 229);
+  pdf.setLineWidth(0.6);
+  pdf.line(centerX - 40, footerY - 10, centerX + 40, footerY - 10);
+
+  // Z logo
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(14);
+  pdf.setTextColor(79, 70, 229);
+  pdf.text('Z', centerX - 16, footerY - 1);
+
+  // Vertical indigo bar
+  pdf.setDrawColor(79, 70, 229);
+  pdf.setLineWidth(1.2);
+  pdf.line(centerX - 8, footerY - 6, centerX - 8, footerY + 2);
+
+  // Brand text
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
-  pdf.setTextColor(79, 70, 229);
-  pdf.text('Z', w / 2 - 12, footerY);
-  
-  pdf.setFontSize(7);
   pdf.setTextColor(31, 41, 55);
-  pdf.text('Zairi ERP', w / 2 - 5, footerY - 1);
-  pdf.setFontSize(5.5);
+  pdf.text('Zairi ERP', centerX - 4, footerY - 2.5);
+
+  pdf.setFontSize(5);
   pdf.setTextColor(79, 70, 229);
-  pdf.text('SOFTWARE SOLUTIONS', w / 2 - 5, footerY + 2.5);
+  pdf.text('SOFTWARE SOLUTIONS', centerX - 4, footerY + 0.5);
+
+  // Tagline
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(5);
+  pdf.setTextColor(156, 163, 175);
+  pdf.text('Gestion d\'heures & facturation intelligente', centerX, footerY + 5, { align: 'center' });
 
   return pdf.output('blob');
 }

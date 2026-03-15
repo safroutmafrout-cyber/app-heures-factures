@@ -117,14 +117,20 @@ export function setOnboarded() {
 }
 
 // ── Generated Invoices Tracking ───────────────────────
+export interface InvoiceSendRecord {
+  email: string;
+  sentAt: string; // ISO date
+}
+
 export interface InvoiceRecord {
   invoiceNumber: string | number;
   weekKey: string;
   clientId: string;
   total: number;
   generatedAt: string; // ISO date
-  sentTo?: string;     // email address sent to
-  sentAt?: string;     // ISO date of last send
+  sentTo?: string;     // latest email sent to
+  sentAt?: string;     // ISO date of latest send
+  sendHistory?: InvoiceSendRecord[]; // full history of sends
 }
 
 function invoiceKey(weekKey: string, clientId: string): string {
@@ -135,8 +141,13 @@ export function markInvoiceSent(weekKey: string, clientId: string, email: string
   const all = getGeneratedInvoices();
   const key = invoiceKey(weekKey, clientId);
   if (all[key]) {
+    const now = new Date().toISOString();
+    // Append to send history
+    if (!all[key].sendHistory) all[key].sendHistory = [];
+    all[key].sendHistory.push({ email, sentAt: now });
+    // Also update latest
     all[key].sentTo = email;
-    all[key].sentAt = new Date().toISOString();
+    all[key].sentAt = now;
     localStorage.setItem(KEYS.generatedInvoices, JSON.stringify(all));
     scheduleSync();
   }
