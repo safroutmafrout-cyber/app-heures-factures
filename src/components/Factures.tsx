@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { getEntries, getClients, getProfile, getNextInvoiceNumber, incrementInvoiceNumber, saveGeneratedInvoice, getGeneratedInvoices, getInvoiceForWeek } from '@/lib/store';
+import { getEntries, getClients, getProfile, getNextInvoiceNumber, incrementInvoiceNumber, saveGeneratedInvoice, getGeneratedInvoices, getInvoiceForWeek, markInvoiceSent } from '@/lib/store';
 import type { InvoiceRecord } from '@/lib/store';
 import { getWeekKey, getWeekRange, money } from '@/lib/utils';
 import { FileText, Printer, Mail, Download, CheckCircle2, XCircle, BookOpen, Send, X, Loader2 } from 'lucide-react';
@@ -373,6 +373,9 @@ export default function Factures() {
                   if (res.ok) {
                     // Save email for this client
                     if (activeClient) localStorage.setItem(`lastEmail_${activeClient.id}`, emailTo);
+                    // Mark invoice as sent
+                    markInvoiceSent(selectedWeek, selectedClient, emailTo);
+                    setInvoiceRecords(getGeneratedInvoices());
                     setToast({ msg: `✅ Email envoyé à ${emailTo} avec PDF joint`, type: 'success' });
                     setShowEmailDialog(false);
                   } else {
@@ -530,7 +533,7 @@ export default function Factures() {
                   <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">Semaine</th>
                   <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">Client</th>
                   <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-secondary)] uppercase">Total</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-secondary)] uppercase">Date</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase">Statut</th>
                   <th className="px-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase">Action</th>
                 </tr>
               </thead>
@@ -548,7 +551,17 @@ export default function Factures() {
                       <td className="px-3 py-2.5">{getWeekRange(rec.weekKey)}</td>
                       <td className="px-3 py-2.5 text-[var(--color-text-secondary)]">{client?.name || '—'}</td>
                       <td className="px-3 py-2.5 text-right font-semibold text-[var(--color-success)]">{money(rec.total)}</td>
-                      <td className="px-3 py-2.5 text-right text-[var(--color-text-muted)] text-xs">{new Date(rec.generatedAt).toLocaleDateString('fr-CA')}</td>
+                      <td className="px-3 py-2.5 text-center">
+                        {rec.sentTo ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" title={`Envoyé à ${rec.sentTo}`}>
+                            ✉️ Envoyé
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
+                            📄 Généré
+                          </span>
+                        )}
+                      </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
                           onClick={() => handleReprint(rec)}

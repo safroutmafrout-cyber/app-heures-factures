@@ -123,10 +123,23 @@ export interface InvoiceRecord {
   clientId: string;
   total: number;
   generatedAt: string; // ISO date
+  sentTo?: string;     // email address sent to
+  sentAt?: string;     // ISO date of last send
 }
 
 function invoiceKey(weekKey: string, clientId: string): string {
   return `${weekKey}__${clientId}`;
+}
+
+export function markInvoiceSent(weekKey: string, clientId: string, email: string) {
+  const all = getGeneratedInvoices();
+  const key = invoiceKey(weekKey, clientId);
+  if (all[key]) {
+    all[key].sentTo = email;
+    all[key].sentAt = new Date().toISOString();
+    localStorage.setItem(KEYS.generatedInvoices, JSON.stringify(all));
+    scheduleSync();
+  }
 }
 
 export function getGeneratedInvoices(): Record<string, InvoiceRecord> {
