@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { isOnboarded, saveProfile, saveClients, saveEntries, setInvoiceNumber, saveAllGeneratedInvoices } from '@/lib/store';
+import { isOnboarded, saveProfile, saveClients, saveEntries, setInvoiceNumber, saveAllGeneratedInvoices, setOnboarded } from '@/lib/store';
 import Onboarding from '@/components/Onboarding';
 import AppShell from '@/components/AppShell';
 import LandingPage from '@/components/LandingPage';
@@ -12,72 +12,70 @@ type AppState = 'loading' | 'landing' | 'syncing' | 'onboarding' | 'app';
 export default function Home() {
   const { data: session, status: authStatus } = useSession();
   const [appState, setAppState] = useState<AppState>('loading');
+  const pullAttempted = useRef(false);
 
-  const tryPullFromCloud = useCallback(async () => {
-    // Already onboarded locally? Go straight to app
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+
+    // Already onboarded locally? Always go to app
     if (isOnboarded()) {
       setAppState('app');
       return;
     }
 
-    // Not logged in → landing page
-    if (!(session as any)?.accessToken) {
+    // Not authenticated → show landing page
+    if (authStatus === 'unauthenticated') {
       setAppState('landing');
       return;
     }
 
-    // Logged in but no local data → try pulling from Google Sheet
-    setAppState('syncing');
+    // Authenticated but no local data → try pulling from Google Sheet
+    // Only attempt once per session to avoid loops
+    if (pullAttempted.current) return;
+    pullAttempted.current = true;
 
-    try {
-      const res = await fetch('/api/sheets/pull');
+    async function tryPullFromCloud() {
+      setAppState('syncing');
 
-      if (res.ok) {
-        const result = await res.json();
-        const data = result.data;
+      try {
+        const res = await fetch('/api/sheets/pull');
 
-        // Check if the Sheet had real data
-        if (data?.profile && data.profile.companyName) {
-          // Restore all data to localStorage
-          saveProfile(data.profile);
-          if (data.clients?.length > 0) saveClients(data.clients);
-          if (data.entries?.length > 0) saveEntries(data.entries);
-          if (data.invoiceNum) setInvoiceNumber(data.invoiceNum);
-          if (data.invoices && Object.keys(data.invoices).length > 0) {
-            saveAllGeneratedInvoices(data.invoices);
+        if (res.ok) {
+          const result = await res.json();
+          const data = result.data;
+
+          // Check if the Sheet had any real data (profile, clients, or entries)
+          const hasProfile = data?.profile && data.profile.companyName;
+          const hasClients = data?.clients?.length > 0;
+          const hasEntries = data?.entries?.length > 0;
+
+          if (hasProfile || hasClients || hasEntries) {
+            // Restore all data to localStorage
+            if (data.profile) saveProfile(data.profile);
+            if (hasClients) saveClients(data.clients);
+            if (hasEntries) saveEntries(data.entries);
+            if (data.invoiceNum) setInvoiceNumber(data.invoiceNum);
+            if (data.invoices && Object.keys(data.invoices).length > 0) {
+              saveAllGeneratedInvoices(data.invoices);
+            }
+            setOnboarded();
+
+            setAppState('app');
+            return;
           }
-          // Mark as onboarded since we successfully restored from cloud
-          const { setOnboarded } = await import('@/lib/store');
-          setOnboarded();
-
-          setAppState('app');
-          return;
         }
+
+        // If pull returned 404 or empty profile → onboarding
+        console.log('No existing Sheet found or empty profile, showing onboarding');
+      } catch (err) {
+        console.warn('Auto-pull failed:', err);
       }
-    } catch (err) {
-      console.warn('Auto-pull failed, showing onboarding:', err);
+
+      setAppState('onboarding');
     }
 
-    // No Sheet found or empty → show onboarding
-    setAppState('onboarding');
-  }, [session]);
-
-  useEffect(() => {
-    if (authStatus === 'loading') return;
-
-    if (authStatus === 'unauthenticated') {
-      // Not logged in — show landing if no local data, app if has local data
-      if (isOnboarded()) {
-        setAppState('app');
-      } else {
-        setAppState('landing');
-      }
-      return;
-    }
-
-    // Authenticated → try cloud pull
     tryPullFromCloud();
-  }, [authStatus, tryPullFromCloud]);
+  }, [authStatus, session]);
 
   // Loading state
   if (appState === 'loading') {
