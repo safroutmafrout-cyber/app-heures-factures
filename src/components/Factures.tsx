@@ -124,9 +124,9 @@ export default function Factures() {
     ? getInvoiceForWeek(selectedWeek, selectedClient)
     : null;
 
-  // Sorted list of all generated invoices (newest first)
+  // Sorted list of all generated invoices (newest week first)
   const invoiceList = useMemo(() =>
-    Object.values(invoiceRecords).sort((a, b) => b.generatedAt.localeCompare(a.generatedAt)),
+    Object.values(invoiceRecords).sort((a, b) => b.weekKey.localeCompare(a.weekKey)),
     [invoiceRecords]
   );
 
