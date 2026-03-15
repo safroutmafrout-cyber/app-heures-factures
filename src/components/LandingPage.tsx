@@ -33,7 +33,12 @@ export default function LandingPage() {
       <div className="relative z-10 text-center mb-12 landing-fade-in">
         <div className="inline-flex items-center gap-3 mb-6">
           <div className="landing-logo">
-            <span className="landing-logo-letter">Z</span>
+            <svg viewBox="0 0 40 40" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Stylized Z with diagonal slash */}
+              <path d="M8 8h24v4.5H17.5L32 28.5V32H8v-4.5h14.5L8 11.5V8z" fill="white" />
+              {/* Accent dot */}
+              <circle cx="33" cy="7" r="3" fill="#a78bfa" opacity="0.9" />
+            </svg>
           </div>
           <div className="text-left">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
@@ -91,8 +96,13 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-6 text-center text-[10px] text-[var(--color-text-muted)] z-10">
-        © {new Date().getFullYear()} Zairi Solutions
+      <div className="absolute bottom-6 text-center z-10">
+        <p className="text-[10px] text-[var(--color-text-muted)]">
+          © {new Date().getFullYear()} Zairi Solutions
+        </p>
+        <p className="text-[10px] text-[var(--color-text-muted)] mt-1 opacity-60">
+          514-570-0598
+        </p>
       </div>
     </div>
   );
